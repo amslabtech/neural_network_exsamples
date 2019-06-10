@@ -55,11 +55,14 @@ for i in range(1000): # trains the NN 1,000 times
     if i % 200 ==0: 
         print ("for iteration # " + str(i) + "\n")
         predict = NN.feedforward()
+        predict = [[0.1],[0.7],[1.2],[0.2]]
+        predict = [[0.4],[0.6],[0.6],[0.4]]
         print ("推論結果: \n" + str(predict))
         error = y - predict
         print ("誤差 \n" + str(error))
         error_square = np.square(error)
         print ("誤差の二乗: \n" + str(error_square))
+        #ここで言う損失関数は　np.mean(np.square(y - NN.feedforward()))
         print ("Loss: \n" + str(np.mean(error_square)))
         print ("\n")
   
