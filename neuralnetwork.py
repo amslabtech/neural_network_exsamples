@@ -5,7 +5,7 @@
 import numpy as np 
 import math
 
-# 活性化関数（例としてシグモイド関数）
+# 活性化関数（シグモイド関数）
 def sigmoid(t):
     return 1/(1+np.exp(-t))
 
@@ -13,7 +13,7 @@ def sigmoid(t):
 def sigmoid_derivative(p):
     return p * (1 - p)
 
-# 活性化関数（例とrelu関数）
+# 活性化関数（relu関数）
 def relu(t):
     return np.maximum(t, 0)
 
@@ -33,11 +33,13 @@ class NeuralNetwork:
         return self.layer2
         
     def backprop(self):
-        error = self.output - self.y 
-        slope_layer2 = sigmoid_derivative(self.output)
-        slope_layer1 = sigmoid_derivative(self.layer1)
-        d_weights2 = np.dot(self.layer1.T, 2*(error)*slope_layer2)
-        d_weights1 = np.dot(self.x.T, np.dot(2*(error)*slope_layer2, self.weights2.T)*slope_layer1)
+        error = self.layer2 - self.y 
+        derivative_layer2 = sigmoid_derivative(self.layer2)
+        derivative_layer1 = sigmoid_derivative(self.layer1)
+        slope_layer2 = 2 * error * derivative_layer2
+        d_weights2 = np.dot(self.layer1.T, slope_layer2)
+        slope_layer1 = np.dot(slope_layer2, self.weights2.T) * derivative_layer1
+        d_weights1 = np.dot(self.x.T, slope_layer1)
     
         self.weights1 -= d_weights1
         self.weights2 -= d_weights2
@@ -45,7 +47,7 @@ class NeuralNetwork:
     def train(self, x, y):
         self.x = x
         self.y = y
-        self.output = self.feedforward()
+        self.feedforward()
         self.backprop()
 
     def test(self, x):
@@ -64,9 +66,10 @@ NN = NeuralNetwork(x,y)
 for i in range(1000): # trains the NN 1,000 times
     if i % 200 ==1: 
         print ("for iteration # " + str(i) + "\n")
+
         predict = NN.feedforward()
         print ("推論結果: \n" + str(predict))
-        error = y - predict
+        error = predict - y 
         print ("誤差 \n" + str(error))
         error_square = np.square(error)
         print ("誤差の二乗: \n" + str(error_square))
