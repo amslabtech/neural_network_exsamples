@@ -25,18 +25,18 @@ class NeuralNetwork:
     def __init__(self, x,y):
         self.weights1= np.random.rand(x.shape[1],4)
         self.weights2 = np.random.rand(4,y.shape[1])
-        self.learning_rate = 1
+        self.learning_rate = 1e-5
         
     def feedforward(self):
-        self.layer1 = sigmoid(np.dot(self.x, self.weights1))
-        self.layer2 = sigmoid(np.dot(self.layer1, self.weights2))
+        self.layer1 = relu(np.dot(self.x, self.weights1))
+        self.layer2 = relu(np.dot(self.layer1, self.weights2))
         # layer2がアウトプットになる
         return self.layer2
         
     def backprop(self):
         error = self.layer2 - self.y 
-        derivative_layer2 = sigmoid_derivative(self.layer2)
-        derivative_layer1 = sigmoid_derivative(self.layer1)
+        derivative_layer2 = relu_derivative(self.layer2)
+        derivative_layer1 = relu_derivative(self.layer1)
 
         slope_layer2 = 2 * error * derivative_layer2
         d_weights2 = np.dot(self.layer1.T, slope_layer2)
@@ -62,35 +62,43 @@ class NeuralNetwork:
 
 x=np.array(([0,0,1],[0,1,1],[1,0,1],[1,1,1]), dtype=float)
 y=np.array(([0],[1],[1],[0]), dtype=float)
-# x = 2 * math.pi * np.random.rand(100, 1)
-# y = np.sin(x)
 
 NN = NeuralNetwork(x,y)
-epoch = 1000
+epoch = 10000
 for i in range(epoch): # trains the NN 1,000 times
-    if i % (epoch / 5) ==1: 
-        print ("for iteration # " + str(i) + "\n")
+    # if i % (epoch / 5) ==1: 
+    #     print ("for iteration # " + str(i) + "\n")
 
-        predict = NN.feedforward()
-        print ("推論結果: \n" + str(predict))
-        error = predict - y 
-        print ("誤差 \n" + str(error))
-        error_square = np.square(error)
-        print ("誤差の二乗: \n" + str(error_square))
-        #ここで言う損失関数は　np.mean(np.square(y - NN.feedforward()))
-        print ("Loss: \n" + str(np.mean(error_square)))
-        print ("\n")
+    #     predict = NN.feedforward()
+    #     print ("推論結果: \n" + str(predict))
+    #     error = predict - y 
+    #     print ("誤差 \n" + str(error))
+    #     error_square = np.square(error)
+    #     print ("誤差の二乗: \n" + str(error_square))
+    #     #ここで言う損失関数は　np.mean(np.square(y - NN.feedforward()))
+    #     print ("Loss: \n" + str(np.mean(error_square)))
+    #     print ("\n")
   
     NN.train(x, y)
 
-# x=np.array(([[0],[math.pi/2],[math.pi],[3 * math.pi/2]]), dtype=float)
-# print(x)
-# print ("Predicted Output: \n" + str(NN.test(x)))
-
 # In[2]:
 x=np.array(([0, 0, 0.9],[0, 1.2, 1.1]), dtype=float)
-y = NN.test(x)
-print(y.shape)
+print("input " + str(x))
 print ("Predicted Output: \n" + str(NN.test(x)))
 x=np.array(([1, 0, 1],[1, 1, 1]), dtype=float)
+print("input " + str(x))
+print ("Predicted Output: \n" + str(NN.test(x)))
+
+
+x = 2 * math.pi * np.random.rand(100, 1)
+y = np.sin(x)
+
+NN = NeuralNetwork(x,y)
+epoch = 10000
+for i in range(epoch): 
+    NN.train(x, y)
+
+
+x=np.array(([[0],[math.pi/2],[math.pi],[3 * math.pi/2]]), dtype=float)
+print("input " + str(x))
 print ("Predicted Output: \n" + str(NN.test(x)))
