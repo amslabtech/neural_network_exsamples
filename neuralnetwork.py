@@ -25,6 +25,7 @@ class NeuralNetwork:
     def __init__(self, x,y):
         self.weights1= np.random.rand(x.shape[1],4)
         self.weights2 = np.random.rand(4,y.shape[1])
+        self.learning_rate = 1
         
     def feedforward(self):
         self.layer1 = sigmoid(np.dot(self.x, self.weights1))
@@ -36,13 +37,15 @@ class NeuralNetwork:
         error = self.layer2 - self.y 
         derivative_layer2 = sigmoid_derivative(self.layer2)
         derivative_layer1 = sigmoid_derivative(self.layer1)
+
         slope_layer2 = 2 * error * derivative_layer2
         d_weights2 = np.dot(self.layer1.T, slope_layer2)
+
         slope_layer1 = np.dot(slope_layer2, self.weights2.T) * derivative_layer1
         d_weights1 = np.dot(self.x.T, slope_layer1)
     
-        self.weights1 -= d_weights1
-        self.weights2 -= d_weights2
+        self.weights1 -= self.learning_rate * d_weights1
+        self.weights2 -= self.learning_rate * d_weights2
 
     def train(self, x, y):
         self.x = x
@@ -63,8 +66,9 @@ y=np.array(([0],[1],[1],[0]), dtype=float)
 # y = np.sin(x)
 
 NN = NeuralNetwork(x,y)
-for i in range(1000): # trains the NN 1,000 times
-    if i % 200 ==1: 
+epoch = 1000
+for i in range(epoch): # trains the NN 1,000 times
+    if i % (epoch / 5) ==1: 
         print ("for iteration # " + str(i) + "\n")
 
         predict = NN.feedforward()
