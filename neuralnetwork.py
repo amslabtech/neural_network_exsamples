@@ -18,10 +18,8 @@ def relu(t):
     return np.maximum(t, 0)
 
 def relu_derivative(t):
-    # print("t")
-    # print(t)
-    # t[False] = 0
-    return 1
+    t = np.where(t > 0, 1, 0)
+    return t
 
 class NeuralNetwork:
     def __init__(self, x,y):
@@ -35,14 +33,14 @@ class NeuralNetwork:
         return self.layer2
         
     def backprop(self):
-        error = self.y -self.output
+        error = self.output - self.y 
         slope_layer2 = sigmoid_derivative(self.output)
         slope_layer1 = sigmoid_derivative(self.layer1)
         d_weights2 = np.dot(self.layer1.T, 2*(error)*slope_layer2)
-        d_weights1 = np.dot(self.input.T, np.dot(2*(error)*slope_layer2, self.weights2.T)*slope_layer1)
+        d_weights1 = np.dot(self.x.T, np.dot(2*(error)*slope_layer2, self.weights2.T)*slope_layer1)
     
-        self.weights1 += d_weights1
-        self.weights2 += d_weights2
+        self.weights1 -= d_weights1
+        self.weights2 -= d_weights2
 
     def train(self, x, y):
         self.x = x
@@ -51,23 +49,20 @@ class NeuralNetwork:
         self.backprop()
 
     def test(self, x):
-        self.input = x
+        self.x = x
         output = self.feedforward()
         return output
         
 # In[1]:
 
 x=np.array(([0,0,1],[0,1,1],[1,0,1],[1,1,1]), dtype=float)
-print(x.shape)
-print(x.shape[1])
 y=np.array(([0],[1],[1],[0]), dtype=float)
-print(y.shape)
 # x = 2 * math.pi * np.random.rand(100, 1)
 # y = np.sin(x)
 
 NN = NeuralNetwork(x,y)
 for i in range(1000): # trains the NN 1,000 times
-    if i % 200 ==0: 
+    if i % 200 ==1: 
         print ("for iteration # " + str(i) + "\n")
         predict = NN.feedforward()
         print ("推論結果: \n" + str(predict))
@@ -86,12 +81,9 @@ for i in range(1000): # trains the NN 1,000 times
 # print ("Predicted Output: \n" + str(NN.test(x)))
 
 # In[2]:
-x=np.array(([0,0,0.9],[0,1.2,1.1]), dtype=float)
+x=np.array(([0, 0, 0.9],[0, 1.2, 1.1]), dtype=float)
 y = NN.test(x)
 print(y.shape)
 print ("Predicted Output: \n" + str(NN.test(x)))
-x=np.array(([1,0,1],[1,1,1]), dtype=float)
+x=np.array(([1, 0, 1],[1, 1, 1]), dtype=float)
 print ("Predicted Output: \n" + str(NN.test(x)))
-
-
-#%%
