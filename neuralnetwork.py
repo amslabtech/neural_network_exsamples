@@ -27,39 +27,79 @@ def relu_derivative(t):
     t = np.where(t > 0, 1, 0)
     return t
 
+class Layer:
+    # modelにこのレイヤーが追加された時に呼ばれて, レイヤーを通した後のshapeを返す
+    def layer_added(self, input_shape):
+        return input_shape
+
+class Linear(Layer):
+    def __init__(self, output_shape):
+        self.output_shape = output_shape
+
+    def layer_added(self, input_shape):
+        self.input_shape = input_shape
+        self.weights = np.random.rand(input_shape, self.output_shape)
+        return self.output_shape
+
+    def forward(self, x):
+        return np.dot(x, self.weights)
+
+    def backword(self, x, output_grad):
+        input_grad = np.dot(output_grad, self.weights.T)
+        change_grad = np.dot(x.T, output_grad)
+        # TODO learning_rateを外部から与える
+        learning_rate = 1e-5
+        self.weights -= change_grad * learning_rate
+        return input_grad
+
+class ReLU(Layer):
+    def forward(self, x):
+        return np.maximum(x, 0)
+
+    def derivative(self, x):
+        x = np.where(x > 0, 1, 0)
+        return x
+
+    def backword(self, x, output_grad):
+        return self.derivative(x) * output_grad
+
+class Sigmoid(Layer):
+    def forward(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def derivative(self, x):
+        return x * (1 - x)
+
+    def backword(self, x, output_grad):
+        return self.derivative(x) * output_grad
+
 class NeuralNetwork:
-    def __init__(self, x, y):
-        self.input_shape = x[0].shape
-        self.output_shape = y[0].shape
-        self.x = x
-        self.y = y
+    def __init__(self, input_shape, learning_rate=1e-5):
+
         prod = functools.partial(functools.reduce, operator.mul)
-        self.weights1= np.random.rand(prod(self.input_shape), 4)
-        self.weights2 = np.random.rand(4, prod(self.output_shape))
-        self.learning_rate = 1e-5
+        self.output_shape = prod(input_shape)
+        self.layers = []
+        self.learning_rate = learning_rate
+
+    def add(self, x):
+        self.output_shape = x.layer_added(self.output_shape)
+        self.layers.append(x)
         
     def feedforward(self):
-        reshaped_x = self.x.reshape((self.x.shape[0], -1))
-        self.layer1 = relu(np.dot(reshaped_x, self.weights1))
-        self.layer2 = relu(np.dot(self.layer1, self.weights2))
-        # layer2がアウトプットになる
-        return self.layer2
+        reshaped_input = self.x.reshape((self.x.shape[0], -1))
+
+        self.layer_values = [reshaped_input]
+        for layer in self.layers:
+            self.layer_values.append(layer.forward(self.layer_values[-1]))
+
+        return self.layer_values[-1]
         
     def backprop(self):
-        reshaped_x = self.x.reshape((self.x.shape[0], -1))
         reshaped_y = self.y.reshape((self.y.shape[0], -1))
-        error = self.layer2 - reshaped_y
-        derivative_layer2 = relu_derivative(self.layer2)
-        derivative_layer1 = relu_derivative(self.layer1)
-
-        slope_layer2 = 2 * error * derivative_layer2
-        d_weights2 = np.dot(self.layer1.T, slope_layer2)
-
-        slope_layer1 = np.dot(slope_layer2, self.weights2.T) * derivative_layer1
-        d_weights1 = np.dot(reshaped_x.T, slope_layer1)
-    
-        self.weights1 -= self.learning_rate * d_weights1
-        self.weights2 -= self.learning_rate * d_weights2
+        error = self.layer_values[-1] - reshaped_y
+        loss = error * 2
+        for i, layer in reversed(list(enumerate(self.layers))):
+            loss = layer.backword(self.layer_values[i], loss)
 
     def train(self, x, y):
         self.x = x
@@ -67,22 +107,31 @@ class NeuralNetwork:
         self.feedforward()
         self.backprop()
 
-    def test(self, x):
+    def test(self, x, output_shape=None):
+        if output_shape is None:
+            output_shape = (self.output_shape, )
         self.x = x
         output = self.feedforward()
-        reshaped_output = output.reshape((-1, ) + self.output_shape)
+        reshaped_output = output.reshape((-1, ) + output_shape)
         return reshaped_output
         
 # In[1]:
 x = np.array([[[0, 0], [1, 2]], [[2, 3], [3, 4]], [[4, 5], [1, 2]]], dtype=float)
 y = np.array([[1], [2], [3]], dtype=float)
 
-NN = NeuralNetwork(x, y)
+NN = NeuralNetwork((2, 2))
+NN.add(Linear(200))
+NN.add(ReLU())
+NN.add(Linear(1))
+
 epoch = 10000
 for i in range(epoch):
     NN.train(x, y)
 print("input " + str(x))
 print ("Predicted Output: \n" + str(NN.test(x)))
+
+'''
+
 # In[2]:
 
 x=np.array(([0,0,1],[0,1,1],[1,0,1],[1,1,1]), dtype=float)
@@ -158,3 +207,4 @@ print('result : ', NN.test(inputs))
 print('argmax : ', np.argmax(NN.test(inputs), axis=1))
 
 #%%
+'''
